@@ -373,7 +373,7 @@ export default function RouteFare({ auth }) {
                     </div>
                 </div>
 
-                <div className="max-w-3xl mx-auto px-4 -mt-6 pb-20">
+                <div className="max-w-3xl mx-auto px-4 pb-20">
 
                     {/* Route Tabs — scrollable on mobile */}
                     <div className="flex gap-2 mb-5 overflow-x-auto pb-1 scrollbar-hide">

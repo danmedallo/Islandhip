@@ -170,10 +170,9 @@ export default function Schedules({ auth, schedules }) {
                             <div className="grid grid-cols-12 px-5 py-3 bg-gray-50 border-b border-gray-200">
                                 <div className="col-span-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">#</div>
                                 <div className="col-span-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Route</div>
-                                <div className="col-span-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Vessel</div>
                                 <div className="col-span-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Date</div>
-                                <div className="col-span-1 text-xs font-semibold text-gray-400 uppercase tracking-wider text-center">Time</div>
-                                <div className="col-span-1 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right">Duration</div>
+                                <div className="col-span-3 text-xs font-semibold text-gray-400 uppercase tracking-wider text-center">Time</div>
+                                <div className="col-span-2 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right">Duration</div>
                             </div>
 
                             {/* Table Rows */}
@@ -181,7 +180,7 @@ export default function Schedules({ auth, schedules }) {
                                 {display.map((trip, i) => {
                                     const color = getColor(trip.origin, trip.destination);
                                     return (
-                                        <div key={trip.id ?? i} className="grid grid-cols-12 px-5 py-3.5 items-center hover:bg-gray-50 transition-colors">
+                                        <div key={trip.id ?? i} className="grid grid-cols-12 px-5 py-3.5 items-center cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => window.location.href = `/scheduleDetails/${trip.id}`}>
 
                                             {/* # */}
                                             <div className="col-span-1">
@@ -197,26 +196,21 @@ export default function Schedules({ auth, schedules }) {
                                                 </div>
                                             </div>
 
-                                            {/* Vessel */}
-                                            <div className="col-span-3">
-                                                <p className="text-xs text-gray-700">{trip.vessel}</p>
-                                            </div>
-
                                             {/* Date */}
                                             <div className="col-span-2">
                                                 <p className="text-xs text-gray-500">{formatDate(trip.trip_date)}</p>
                                             </div>
 
                                             {/* Time */}
-                                            <div className="col-span-1 text-center">
+                                            <div className="col-span-3 text-center">
                                                 <span className={`text-sm font-bold ${color.text}`} style={{ fontFamily: "'Georgia', serif" }}>
                                                     {trip.time ?? "—"}
                                                 </span>
                                             </div>
 
                                             {/* Duration */}
-                                            <div className="col-span-1 text-right">
-                                                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${color.badge} ${color.text}`}>
+                                            <div className="col-span-2 text-right">
+                                                <span className={`text-sm font-semibold px-2 py-0.5 rounded-full ${color.badge} ${color.text}`}>
                                                     {trip.duration ?? "—"}
                                                 </span>
                                             </div>

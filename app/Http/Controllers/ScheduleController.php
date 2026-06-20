@@ -81,4 +81,17 @@ class ScheduleController extends Controller
             'schedules' => $schedules,
         ]);
     }
+
+    public function scheduleDetails(Request $request)
+    {
+        $schedule = Schedules::find($request->id);
+
+        if (!$schedule) {
+            abort(404, 'Schedule not found');
+        }
+
+        return Inertia::render('ScheduleDetails', [
+            'schedule' => $schedule,
+        ]);
+    }
 }

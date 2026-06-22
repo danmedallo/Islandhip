@@ -15,9 +15,7 @@ class ScrapeSchedules extends Command
 
     public function handle()
     {
-        $this->info('🔍 Scraping schedules...');
-
-        // Wait for JS to render then grab HTML
+        $this->info('🔍 Scraping schedules...');// Wait for JS to render then grab HTML
        $html = Browsershot::url('https://islandshipping.com.ph/schedules')
         ->waitUntilNetworkIdle()
         ->setDelay(3000)

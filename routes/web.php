@@ -23,6 +23,10 @@ Route::get('/routefare', function () {
 Route::get('/scheduleDetails/{id}', [ScheduleController::class, 'scheduleDetails'])
     ->name('scheduleDetails');
 
+Route::get('/book', function () {
+    return Inertia::render('BookTrip');
+})->name('book');
+
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');

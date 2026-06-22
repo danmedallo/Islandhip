@@ -62,7 +62,7 @@ export default function ScheduleDetail({ auth, schedule }) {
                     <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <a href="/" className="w-9 h-9 bg-green-700 rounded-xl flex items-center justify-center text-white text-lg">⚓</a>
-                            <span className="font-bold text-gray-900 text-base">IslandShip</span>
+                            <span className="font-bold text-gray-900 text-base">IslandShipping</span>
                         </div>
                         <Link
                             href="/schedule"
@@ -248,13 +248,13 @@ export default function ScheduleDetail({ auth, schedule }) {
                     {/* Action Buttons */}
                     <div className="flex gap-3 pt-2">
                         <Link
-                            href="/schedules"
+                            href="/schedule"
                             className="flex-1 py-3.5 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 text-center hover:bg-gray-50 transition-colors"
                         >
                             ← Back to Schedules
                         </Link>
                         <a
-                            href="/fares"
+                            href="/routefare"
                             className={`flex-1 py-3.5 ${color.active} text-white rounded-xl text-sm font-semibold text-center hover:opacity-90 transition-opacity`}
                         >
                             View Fares →

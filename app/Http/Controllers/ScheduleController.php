@@ -8,6 +8,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class ScheduleController extends Controller
 {
@@ -55,30 +56,46 @@ class ScheduleController extends Controller
         ]);
     }
 
-    public function schedules(Request $request){
-        $query = Schedules::query();
+    public function schedules(Request $request)
+    {
+        $query = Schedules::query(); // ← make sure model name is correct
 
-        // Only apply date filter IF user selected a date
-        if ($request->date) {
-            $query->whereDate('trip_date', Carbon::parse($request->date)->toDateString());
-        }
-
-        if ($request->from) {
+        if ($request->filled('from')) {
             $query->where('origin', $request->from);
         }
 
-        if ($request->to) {
+        if ($request->filled('to')) {
             $query->where('destination', $request->to);
         }
 
-        $schedules = $query->get()
-        ->sortBy(function ($s) {
-            return Carbon::createFromFormat('h:i A', $s->time);
-        })
-        ->values();
+        if ($request->filled('date')) {
+            $query->whereDate('trip_date', Carbon::parse($request->date)->toDateString());
+        }
+
+        // Sort by time correctly
+        $sorted = $query->get()
+            ->sortBy(function ($s) {
+                try {
+                    return Carbon::createFromFormat('g:i A', trim($s->time));
+                } catch (\Exception $e) {
+                    return Carbon::createFromFormat('h:i A', trim($s->time));
+                }
+            })
+            ->values();
+
+        $perPage     = 15;
+        $currentPage = LengthAwarePaginator::resolveCurrentPage();
+
+        $paged = $sorted->slice(($currentPage - 1) * $perPage, $perPage)->values();
+
+        $schedules = new LengthAwarePaginator($paged, $sorted->count(), $perPage, $currentPage, [
+            'path'  => $request->url(),
+            'query' => $request->query(),
+        ]);
 
         return Inertia::render('Schedule', [
             'schedules' => $schedules,
+            'filters'   => $request->only(['from', 'to', 'date']),
         ]);
     }
 

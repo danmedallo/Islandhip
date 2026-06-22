@@ -1,5 +1,6 @@
 import { Head, Link } from "@inertiajs/react";
 import { useState } from "react";
+import AppLayout from "@/Layouts/AppLayout";
 
 const fareData = {
     bantayan: {
@@ -325,36 +326,10 @@ export default function RouteFare({ auth }) {
     const c = current.color;
 
     return (
-        <>
+        <AppLayout>
             <Head title="Routes & Fare Guide" />
 
             <div className="min-h-screen bg-gray-50">
-
-                {/* Navbar */}
-                <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
-                    <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <a href="/" className="w-9 h-9 bg-green-700 rounded-xl flex items-center justify-center text-white text-lg">⚓</a>
-                            <span className="font-bold text-gray-900 text-base">IslandShip</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            {auth?.user ? (
-                                <Link href={route("dashboard")} className="px-3 py-2 text-xs font-medium text-white bg-green-700 rounded-lg hover:bg-green-800 transition-colors">
-                                    Dashboard
-                                </Link>
-                            ) : (
-                                <>
-                                    <Link href={route("login")} className="px-3 py-2 text-xs text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                                        Log in
-                                    </Link>
-                                    <Link href={route("register")} className="px-3 py-2 text-xs font-medium text-white bg-green-700 rounded-lg hover:bg-green-800 transition-colors">
-                                        Register
-                                    </Link>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </nav>
 
                 {/* Hero */}
                 <div className="bg-gradient-to-br from-green-900 via-green-700 to-teal-600 px-4 pt-8 pb-16 relative overflow-hidden">
@@ -442,6 +417,6 @@ export default function RouteFare({ auth }) {
 
                 </div>
             </div>
-        </>
+        </ AppLayout>
     );
 }

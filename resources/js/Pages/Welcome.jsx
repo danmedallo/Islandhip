@@ -1,27 +1,6 @@
 import { Head, Link } from "@inertiajs/react";
-
-
-
-const upcomingTrips = [
-    {
-        route: "Hagnaya → Sta. Fe",
-        vessel: "MV Island Ventures III",
-        time: "1:30 PM",
-        duration: "2h",
-    },
-    {
-        route: "Hagnaya → Sta. Fe",
-        vessel: "MV Island Ventures V",
-        time: "3:30 PM",
-        duration: "2h",
-    },
-    {
-        route: "Sta. Fe → Hagnaya",
-        vessel: "MV Island Ventures VII",
-        time: "5:30 PM",
-        duration: "2h",
-    },
-];
+import { useState } from "react";
+import AppLayout from "@/Layouts/AppLayout";
 
 const origins = [
     "Hagnaya, San Remigio, Cebu",
@@ -40,63 +19,28 @@ const destinations = [
 ];
 
 export default function Welcome({ auth, todaysTrip }) {
-    const today = new Date().toISOString().split("T")[0];
-    console.log(todaysTrip)
+
+    const [from, setFrom]     = useState("");
+    const [to, setTo]         = useState("");
+    const [date, setDate]     = useState("");
+
+    const handleSearch = (e) => {
+        e.preventDefault();
+        if (!from || !to || !date) {
+            alert("Please fill in all fields.");
+            return;
+        }
+        const searchParams = new URLSearchParams({ from, to, date });
+        window.location.href = `/schedule?${searchParams.toString()}`;
+
+
+    };
     return (
-        <>
+        <AppLayout>
+    
             <Head title="Island Shipping Corporation" />
 
             <div className="min-h-screen bg-gray-50 font-sans">
-
-                {/* Navbar */}
-                <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
-                    <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 bg-green-700 rounded-xl flex items-center justify-center text-white text-lg">
-                                <a href="/">⚓</a>
-                            </div>
-                            <span className="font-bold text-gray-900 text-lg tracking-tight">
-                                IslandShip
-                            </span>
-                        </div>
-                        <div className="hidden md:flex items-center gap-1">
-                            <a href="#routes" className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors">
-                                Routes
-                            </a>
-                            <a href="#schedules" className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors">
-                                Schedules
-                            </a>
-                            <a href="#fares" className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors">
-                                Fares
-                            </a>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            {auth?.user ? (
-                                <Link
-                                    href={route("dashboard")}
-                                    className="px-4 py-2 text-sm font-medium text-white bg-green-700 rounded-lg hover:bg-green-800 transition-colors"
-                                >
-                                    Dashboard
-                                </Link>
-                            ) : (
-                                <>
-                                    <Link
-                                        href={route("login")}
-                                        className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors"
-                                    >
-                                        Log in
-                                    </Link>
-                                    <Link
-                                        href={route("register")}
-                                        className="px-4 py-2 text-sm font-medium text-white bg-green-700 rounded-lg hover:bg-green-800 transition-colors"
-                                    >
-                                        Register
-                                    </Link>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </nav>
 
                 {/* Hero */}
                 <section className="relative bg-gradient-to-br from-green-900 via-green-700 to-teal-600 py-20 px-4 overflow-hidden">
@@ -124,7 +68,7 @@ export default function Welcome({ auth, todaysTrip }) {
                             </p>
                             <div className="flex flex-wrap gap-3">
                                 <a
-                                    href="#search"
+                                    href="/book"
                                     className="px-6 py-3 bg-white text-green-800 font-semibold rounded-xl hover:bg-green-50 transition-colors text-sm"
                                 >
                                     🎫 Book a Trip
@@ -160,10 +104,14 @@ export default function Welcome({ auth, todaysTrip }) {
                                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
                                     From
                                 </label>
-                                <select className="w-full h-10 border border-gray-200 rounded-lg text-sm px-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500">
-                                    <option value="">Select origin</option>
+                                <select onChange={(e) => setFrom(e.target.value)} className="w-full h-10 border border-gray-200 rounded-lg text-sm px-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500">
+                                    <option value="{from}">
+                                        Select origin
+                                    </option>
                                     {origins.map((o) => (
-                                        <option key={o}>{o}</option>
+                                        <option key={o} value={o}>
+                                            {o}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -171,10 +119,14 @@ export default function Welcome({ auth, todaysTrip }) {
                                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
                                     To
                                 </label>
-                                <select className="w-full h-10 border border-gray-200 rounded-lg text-sm px-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500">
-                                    <option value="">Select destination</option>
+                                <select onChange={(e) => setTo(e.target.value)} className="w-full h-10 border border-gray-200 rounded-lg text-sm px-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500">
+                                    <option value="{to}">
+                                        Select destination
+                                    </option>
                                     {destinations.map((d) => (
-                                        <option key={d}>{d}</option>
+                                        <option key={d} value={d}>
+                                            {d}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -184,11 +136,12 @@ export default function Welcome({ auth, todaysTrip }) {
                                 </label>
                                 <input
                                     type="date"
-                                    defaultValue={today}
+                                    value={date}
+                                    onChange={(e) => setDate(e.target.value)}
                                     className="w-full h-10 border border-gray-200 rounded-lg text-sm px-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 />
                             </div>
-                            <button className="h-10 bg-green-700 text-white rounded-lg text-sm font-semibold hover:bg-green-800 transition-colors flex items-center justify-center gap-2">
+                            <button onClick={handleSearch} className="h-10 bg-green-700 text-white rounded-lg text-sm font-semibold hover:bg-green-800 transition-colors flex items-center justify-center gap-2">
                                 🔍 Search Trips
                             </button>
                         </div>
@@ -206,8 +159,9 @@ export default function Welcome({ auth, todaysTrip }) {
                     </h2>
                     <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
                         {todaysTrip.map((trip, i) => (
-                            <div
+                            <Link
                                 key={i}
+                                href={`/scheduleDetails/${trip.id}`}
                                 className={`flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors ${
                                     i !== todaysTrip.length - 1
                                         ? "border-b border-gray-100"
@@ -230,7 +184,7 @@ export default function Welcome({ auth, todaysTrip }) {
                                     </p>
                                     <p className="text-xs text-gray-400">{trip.duration} trip</p>
                                 </div>
-                            </div>
+                            </Link>
                         ))}
                         
                         <div className="px-5 py-3 bg-gray-50 border-t border-gray-100">
@@ -244,30 +198,8 @@ export default function Welcome({ auth, todaysTrip }) {
                     </div>
                 </section>
 
-                {/* Footer */}
-                <footer className="bg-green-900 text-white py-10 px-4">
-                    <div className="max-w-6xl mx-auto">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-lg">
-                                ⚓
-                            </div>
-                            <span className="font-bold text-lg">Island Shipping Corporation</span>
-                        </div>
-                        <p className="text-green-300 text-sm italic mb-4">
-                            "We Sail for the glory of God and Country"
-                        </p>
-                        <p className="text-green-400 text-xs">
-                            A.T. TAN Centre Road 6, North Reclamation Area, Cebu City · (032) 266-0718
-                        </p>
-                        <div className="border-t border-white/10 mt-6 pt-4">
-                            <p className="text-green-500 text-xs text-center">
-                                © {new Date().getFullYear()} Island Shipping Corporation. All rights reserved.
-                            </p>
-                        </div>
-                    </div>
-                </footer>
-
             </div>
-        </>
+        
+        </ AppLayout>
     );
 }

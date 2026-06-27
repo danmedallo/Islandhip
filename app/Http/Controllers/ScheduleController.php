@@ -30,20 +30,29 @@ class ScheduleController extends Controller
             $query->where('destination', $request->to);
         }
 
-        $isToday = $date === today()->toDateString();
+        $now = Carbon::now('Asia/Manila');
+        $today = $now->toDateString();
 
         $trips = $query->get()
-            ->filter(function ($trip) use ($isToday) {
+            ->filter(function ($trip) use ($now, $today) {
+                try {
+                    $tripTime = Carbon::createFromFormat(
+                        'Y-m-d g:i A',
+                        $today . ' ' . trim($trip->time),
+                        'Asia/Manila'
+                    );
 
-                if (!$isToday) {
-                    return true;
+                    return $tripTime->greaterThanOrEqualTo($now);
+                } catch (\Exception $e) {
+                    return false;
                 }
-
-                return Carbon::createFromFormat('h:i A', $trip->time)
-                    ->greaterThanOrEqualTo(now());
             })
-            ->sortBy(function ($trip) {
-                return Carbon::createFromFormat('h:i A', $trip->time);
+            ->sortBy(function ($trip) use ($today) {
+                return Carbon::createFromFormat(
+                    'Y-m-d g:i A',
+                    $today . ' ' . trim($trip->time),
+                    'Asia/Manila'
+                );
             })
             ->values();
 

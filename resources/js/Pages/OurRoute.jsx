@@ -1,4 +1,4 @@
-import { Head, Link } from "@inertiajs/react";
+import AppLayout from "@/Layouts/AppLayout";
 const routes = [
     {
         name: "Bantayan Island",
@@ -28,56 +28,7 @@ const routes = [
 export default function Route({ auth }) {
 
 return (
-    <>
-    {/* Navbar */}
-                <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
-                    <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 bg-green-700 rounded-xl flex items-center justify-center text-white text-lg">
-                                <a href="/">⚓</a>
-                            </div>
-                            <span className="font-bold text-gray-900 text-lg tracking-tight">
-                                IslandShip
-                            </span>
-                        </div>
-                        <div className="hidden md:flex items-center gap-1">
-                            <a href="#routes" className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors">
-                                Routes
-                            </a>
-                            <a href="#schedules" className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors">
-                                Schedules
-                            </a>
-                            <a href="#fares" className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors">
-                                Fares
-                            </a>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            {auth?.user ? (
-                                <Link
-                                    href={route("dashboard")}
-                                    className="px-4 py-2 text-sm font-medium text-white bg-green-700 rounded-lg hover:bg-green-800 transition-colors"
-                                >
-                                    Dashboard
-                                </Link>
-                            ) : (
-                                <>
-                                    <Link
-                                        href={route("login")}
-                                        className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors"
-                                    >
-                                        Log in
-                                    </Link>
-                                    <Link
-                                        href={route("register")}
-                                        className="px-4 py-2 text-sm font-medium text-white bg-green-700 rounded-lg hover:bg-green-800 transition-colors"
-                                    >
-                                        Register
-                                    </Link>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </nav>
+    <AppLayout>
                 {/* Hero */}
                 <div className="bg-gradient-to-br from-green-900 via-green-700 to-teal-600 px-4 pt-10 pb-20 relative overflow-hidden">
                     <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "repeating-linear-gradient(45deg,#fff 0,#fff 1px,transparent 0,transparent 50%)", backgroundSize: "20px 20px" }} />
@@ -137,6 +88,6 @@ return (
                         ))}
                     </div>
                 </section>
-    </>
+    </ AppLayout>
 )
 }

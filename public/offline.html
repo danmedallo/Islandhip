@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#15803d">
+    <title>Offline - IslandShipping</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: #f9fafb;
+            color: #111827;
+            font-family: Figtree, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+            text-align: center;
+        }
+
+        .mark {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 24px;
+            border-radius: 20px;
+            background: #15803d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        h1 { margin: 0 0 8px; font-size: 20px; font-weight: 700; }
+
+        p { margin: 0 auto; max-width: 30ch; color: #4b5563; font-size: 15px; line-height: 1.6; }
+
+        button {
+            margin-top: 24px;
+            padding: 10px 20px;
+            border: 0;
+            border-radius: 8px;
+            background: #15803d;
+            color: #fff;
+            font: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        button:hover { background: #166534; }
+
+        @media (prefers-color-scheme: dark) {
+            body { background: #111827; color: #f9fafb; }
+            p { color: #9ca3af; }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <div class="mark">
+            <svg width="44" height="44" viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="7"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="50" cy="17" r="8"/>
+                <line x1="50" y1="25" x2="50" y2="86"/>
+                <line x1="31" y1="38" x2="69" y2="38"/>
+                <path d="M21 59 C21 78 34 88 50 88 C66 88 79 78 79 59"/>
+                <line x1="21" y1="59" x2="12" y2="56"/>
+                <line x1="79" y1="59" x2="88" y2="56"/>
+            </svg>
+        </div>
+
+        <h1>You're offline</h1>
+        <p>This page needs a connection. Schedules and fares you've already opened are still available.</p>
+
+        <button type="button" onclick="location.reload()">Try again</button>
+    </main>
+
+    <script>
+        addEventListener('online', () => location.reload());
+    </script>
+</body>
+</html>

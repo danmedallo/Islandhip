@@ -16,7 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        //
+        // Both deployments put a proxy in front of PHP (Render's load balancer,
+        // nginx on a VPS) and never expose the app port publicly, so forwarded
+        // headers can be trusted. Without this Laravel generates http:// URLs
+        // behind TLS termination, which breaks the service worker.
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

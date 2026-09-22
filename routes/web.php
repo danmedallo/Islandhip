@@ -6,6 +6,20 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+// The worker is built into public/build/ but must be served from the site root,
+// otherwise its scope is limited to /build and it cannot control any page.
+Route::get('/sw.js', function () {
+    $path = public_path('build/sw.js');
+
+    abort_unless(file_exists($path), 404);
+
+    return response()->file($path, [
+        'Content-Type' => 'text/javascript',
+        'Service-Worker-Allowed' => '/',
+        'Cache-Control' => 'no-cache',
+    ]);
+})->name('serviceworker');
+
 Route::get('/', [ScheduleController::class, 'welcome'])
     ->name('welcome');
 

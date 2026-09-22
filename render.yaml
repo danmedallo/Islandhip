@@ -1,0 +1,40 @@
+# Render blueprint. Values marked `sync: false` must be set in the dashboard;
+# see DEPLOY-RENDER.md for where each one comes from.
+services:
+  - type: web
+    name: islandhip
+    runtime: docker
+    plan: free
+    region: singapore
+    healthCheckPath: /up
+    envVars:
+      - key: APP_KEY          # php artisan key:generate --show
+        sync: false
+      - key: APP_URL          # https://<service>.onrender.com
+        sync: false
+      - key: DB_HOST          # from Neon
+        sync: false
+      - key: DB_DATABASE
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: APP_NAME
+        value: IslandShipping
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_PORT
+        value: "5432"
+      - key: DB_SSLMODE
+        value: require
+      - key: SESSION_DRIVER
+        value: database
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database

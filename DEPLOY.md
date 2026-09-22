@@ -8,7 +8,7 @@ their own web server and will fight the nginx config below.
 
 | Requirement | Why |
 |---|---|
-| PHP 8.3+ with `xml`, `mbstring`, `curl`, `zip`, and a PDO driver | `xml` is **required** — the scraper uses `DOMDocument`/`DOMXPath` |
+| PHP 8.4+ with `xml`, `mbstring`, `curl`, `zip`, and a PDO driver | `xml` is **required** — the scraper uses `DOMDocument`/`DOMXPath` |
 | Node.js 22 | Build-time only for assets, **and at runtime** for Browsershot |
 | Chrome + `chrome-headless-shell` | `scrape:schedules` drives a real browser via Browsershot |
 | `proc_open` / `exec` enabled | Browsershot shells out to Node |
@@ -34,11 +34,17 @@ ufw allow OpenSSH && ufw allow 'Nginx Full' && ufw enable
 
 ## 2. Install the stack
 
+Laravel 13's Symfony packages require **PHP 8.4**, but Ubuntu 24.04 ships 8.3,
+so add the PPA first. (`composer.json` says `^8.3`; the lock file does not agree
+with it — installing on 8.3 produces a fatal error at boot.)
+
 ```bash
-sudo apt update && sudo apt install -y \
+sudo add-apt-repository -y ppa:ondrej/php && sudo apt update
+
+sudo apt install -y \
   nginx git unzip mysql-server \
-  php8.3-fpm php8.3-cli php8.3-mysql php8.3-xml php8.3-mbstring \
-  php8.3-curl php8.3-zip php8.3-bcmath php8.3-intl php8.3-sqlite3
+  php8.4-fpm php8.4-cli php8.4-mysql php8.4-xml php8.4-mbstring \
+  php8.4-curl php8.4-zip php8.4-bcmath php8.4-intl php8.4-sqlite3
 ```
 
 Then Composer, and Node 22 from NodeSource:
@@ -143,7 +149,7 @@ server {
     }
 
     location ~ \.php$ {
-        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+        fastcgi_pass unix:/run/php/php8.4-fpm.sock;
         fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
         include fastcgi_params;
     }

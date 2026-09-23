@@ -46,10 +46,16 @@ export default function AppLayout({ children }) {
                     <div className="hidden md:flex items-center gap-2">
                         {user ? (
                             <>
-                                <div className="w-8 h-8 bg-green-700 rounded-lg flex items-center justify-center text-white text-xs font-bold">
-                                    {user.name.charAt(0).toUpperCase()}
-                                </div>
-                                <span className="text-sm font-medium text-gray-700 max-w-[100px] truncate">{user.name}</span>
+                                <Link
+                                    href={route('profile.edit')}
+                                    className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                                    title="Your profile"
+                                >
+                                    <span className="w-8 h-8 bg-green-700 rounded-lg flex items-center justify-center text-white text-xs font-bold">
+                                        {user.name.charAt(0).toUpperCase()}
+                                    </span>
+                                    <span className="text-sm font-medium text-gray-700 max-w-[100px] truncate">{user.name}</span>
+                                </Link>
                                 <Link
                                     href={route('logout')}
                                     method="post"

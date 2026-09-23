@@ -132,7 +132,7 @@ export default function BookTrip() {
                     {/* Action Buttons */}
                     <div className="flex gap-3 pt-2">
                         <a
-                            href="/schedules"
+                            href="/schedule"
                             className="flex-1 py-3.5 bg-green-700 text-white rounded-xl text-sm font-semibold text-center hover:bg-green-800 transition-colors"
                         >
                             📅 View Schedules

@@ -19,16 +19,14 @@ export default function ConfirmPassword() {
     };
 
     return (
-        <GuestLayout>
+        <GuestLayout
+            title="Confirm your password"
+            description="This is a secure area. Please confirm your password before continuing."
+        >
             <Head title="Confirm Password" />
 
-            <div className="mb-4 text-sm text-gray-600">
-                This is a secure area of the application. Please confirm your
-                password before continuing.
-            </div>
-
             <form onSubmit={submit}>
-                <div className="mt-4">
+                <div>
                     <InputLabel htmlFor="password" value="Password" />
 
                     <TextInput
@@ -37,6 +35,7 @@ export default function ConfirmPassword() {
                         name="password"
                         value={data.password}
                         className="mt-1 block w-full"
+                        placeholder="••••••••"
                         isFocused={true}
                         onChange={(e) => setData('password', e.target.value)}
                     />
@@ -44,11 +43,9 @@ export default function ConfirmPassword() {
                     <InputError message={errors.password} className="mt-2" />
                 </div>
 
-                <div className="mt-4 flex items-center justify-end">
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Confirm
-                    </PrimaryButton>
-                </div>
+                <PrimaryButton className="mt-5 w-full" disabled={processing}>
+                    {processing ? 'Confirming…' : 'Confirm'}
+                </PrimaryButton>
             </form>
         </GuestLayout>
     );

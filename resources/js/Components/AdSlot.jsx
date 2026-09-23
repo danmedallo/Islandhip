@@ -13,11 +13,25 @@ import useOnline from '@/Hooks/useOnline';
  *  - Nothing renders at all when there is no sponsor configured — an empty
  *    bordered box advertising nothing is worse than no box.
  */
+/**
+ * Content pages only, by Inertia component name.
+ *
+ * Left out on purpose:
+ *   BookTrip      - a booking flow; nothing should compete with finishing it
+ *   Install       - a short utility page, not somewhere to sell
+ *   Dashboard     - someone's account
+ *   Profile/Edit  - someone's account
+ *
+ * The auth screens use GuestLayout, which has no slot at all.
+ */
+const CONTENT_PAGES = ['Welcome', 'Schedule', 'OurRoute', 'Routefare'];
+
 export default function AdSlot() {
-    const { ads } = usePage().props;
+    const { props, component } = usePage();
+    const ads = props.ads;
     const online = useOnline();
 
-    if (!ads?.enabled) {
+    if (!ads?.enabled || !CONTENT_PAGES.includes(component)) {
         return null;
     }
 

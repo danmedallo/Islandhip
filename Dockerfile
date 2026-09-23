@@ -2,10 +2,6 @@
 
 # ---------------------------------------------------------------------------
 # Stage 1: build the front-end assets.
-#
-# --ignore-scripts skips Puppeteer's ~300MB Chrome download. The scrape does
-# not run in this container (no cron here); it is triggered manually or from a
-# VPS, so the browser is dead weight in the image.
 # ---------------------------------------------------------------------------
 FROM node:22-alpine AS assets
 
@@ -56,8 +52,7 @@ RUN composer dump-autoload --no-dev --optimize
 # ---------------------------------------------------------------------------
 FROM dunglas/frankenphp:1-php8.4-alpine
 
-# pdo_pgsql for Postgres; dom/xml are required by the scraper's DOMXPath usage
-# even though the scrape is not run here, because artisan boots the app.
+# pdo_pgsql for Postgres; the rest are Laravel's usual runtime extensions.
 RUN install-php-extensions \
       pdo_pgsql \
       pdo_mysql \

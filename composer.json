@@ -13,7 +13,6 @@
         "laravel/tinker": "^3.0",
         "nativephp/mobile": "^3.3",
         "nativephp/mobile-dialog": "^1.0",
-        "spatie/browsershot": "^5.3",
         "tightenco/ziggy": "^2.0"
     },
     "require-dev": {

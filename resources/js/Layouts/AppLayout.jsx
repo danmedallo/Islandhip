@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import InstallBanner from '@/Components/InstallBanner';
 
 export default function AppLayout({ children }) {
     const { auth } = usePage().props;
@@ -8,6 +9,8 @@ export default function AppLayout({ children }) {
 
     return (
         <div className="min-h-screen bg-gray-50">
+
+            <InstallBanner />
 
             {/* Navbar */}
             <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">

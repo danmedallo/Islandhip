@@ -16,25 +16,53 @@ class ScheduleImporter
      */
     public function replace(array $schedules): int
     {
-        return DB::transaction(function () use ($schedules) {
+        $rows = $this->deduplicate($schedules);
+        $now = now();
+
+        foreach ($rows as $i => $row) {
+            $rows[$i] = $row + ['created_at' => $now, 'updated_at' => $now];
+        }
+
+        return DB::transaction(function () use ($rows) {
             // delete(), not truncate(): TRUNCATE is DDL and forces an implicit
-            // commit on MySQL, which would defeat the rollback this relies on.
+            // commit on MySQL, which would defeat the rollback.
             Schedules::query()->delete();
 
-            foreach ($schedules as $schedule) {
-                Schedules::updateOrCreate(
-                    [
-                        'origin' => $schedule['origin'],
-                        'destination' => $schedule['destination'],
-                        'time' => $schedule['time'],
-                        'vessel' => $schedule['vessel'],
-                        'trip_date' => $schedule['trip_date'] ?? null,
-                    ],
-                    $schedule
-                );
+            // Bulk insert rather than a save() per row. The table is emptied
+            // first, so every row is a plain insert anyway, and one statement
+            // per chunk keeps this fast over a remote database — a row-at-a-time
+            // loop took over a minute against Neon.
+            foreach (array_chunk($rows, 250) as $chunk) {
+                Schedules::insert($chunk);
             }
 
-            return Schedules::count();
+            return count($rows);
         });
+    }
+
+    /**
+     * The source can list the same sailing more than once; the old row-by-row
+     * write collapsed those silently, so keep doing it explicitly.
+     *
+     * @param  array<int, array<string, mixed>>  $schedules
+     * @return array<int, array<string, mixed>>
+     */
+    protected function deduplicate(array $schedules): array
+    {
+        $seen = [];
+
+        foreach ($schedules as $schedule) {
+            $key = implode('|', [
+                $schedule['origin'],
+                $schedule['destination'],
+                $schedule['time'],
+                $schedule['vessel'],
+                $schedule['trip_date'] ?? '',
+            ]);
+
+            $seen[$key] ??= $schedule;
+        }
+
+        return array_values($seen);
     }
 }

@@ -1,5 +1,5 @@
 
-import { Head } from "@inertiajs/react";
+import { Head, Link } from "@inertiajs/react";
 import { useState } from "react";
 import { router } from "@inertiajs/react";
 import AppLayout from "@/Layouts/AppLayout";
@@ -194,10 +194,10 @@ export default function Schedule({ schedules, filters = {} }) {
                                 const rowNumber = (current_page - 1) * 15 + i + 1;
 
                                 return (
-                                    <div
+                                    <Link
                                         key={trip.id ?? i}
-                                        onClick={() => router.visit(`/scheduleDetails/${trip.id}`)}
-                                        className="bg-white border border-gray-200 rounded-2xl px-4 py-4 cursor-pointer hover:border-green-300 hover:shadow-sm transition-all active:scale-[0.99]"
+                                        href={`/scheduleDetails/${trip.id}`}
+                                        className="block bg-white border border-gray-200 rounded-2xl px-4 py-4 cursor-pointer hover:border-green-300 hover:shadow-sm transition-all active:scale-[0.99]"
                                     >
                                         <div className="flex items-center justify-between">
 
@@ -244,7 +244,7 @@ export default function Schedule({ schedules, filters = {} }) {
                                             </div>
 
                                         </div>
-                                    </div>
+                                    </Link>
                                 );
                             })}
 

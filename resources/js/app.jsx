@@ -24,6 +24,26 @@ createInertiaApp({
             forgetCachedPagesOnAuthChange(event.detail.page.props.auth?.user);
         });
 
+        // Inertia navigates by XHR. Offline that request simply fails and the
+        // visitor is left on the current page with nothing happening, even
+        // when the worker holds a cached copy of the destination. Remember
+        // where each visit was headed and, if it throws, hand over to a full
+        // navigation the worker can answer.
+        let attempted = null;
+
+        router.on('start', (event) => {
+            attempted = event.detail.visit?.url?.toString() ?? null;
+        });
+
+        router.on('exception', (event) => {
+            if (!attempted) {
+                return;
+            }
+
+            event.preventDefault();
+            window.location.href = attempted;
+        });
+
         root.render(<App {...props} />);
     },
     progress: {

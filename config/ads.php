@@ -44,7 +44,9 @@ return [
     'support' => [
         'name' => env('ADS_SUPPORT_NAME'),       // the GCash account name
         'number' => env('ADS_SUPPORT_NUMBER'),   // e.g. "0917 123 4567"
-        'note' => env('ADS_SUPPORT_NOTE'),       // optional one-liner
+        // Keep under ~25 characters: the bar is one line and truncates at
+        // 360px, which is a common Android width.
+        'note' => env('ADS_SUPPORT_NOTE'),
     ],
 
 ];

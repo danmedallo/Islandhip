@@ -136,7 +136,7 @@ export default function AdSlot() {
                                 <span className="text-lg shrink-0" aria-hidden="true">☕</span>
                                 <div className="min-w-0">
                                     <p className="text-sm text-gray-700 leading-tight truncate">
-                                        {support.note || 'Enjoying the app? Buy me a coffee'}
+                                        {support.note || 'Helpful? Buy me a coffee'}
                                     </p>
                                     <p className="text-xs text-gray-400 leading-tight truncate">
                                         GCash <span ref={numberRef}>{support.number}</span>

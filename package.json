@@ -28,7 +28,6 @@
         "workbox-strategies": "^7.4.1"
     },
     "dependencies": {
-        "axios": "^1.16.1",
-        "puppeteer": "^25.0.4"
+        "axios": "^1.16.1"
     }
 }

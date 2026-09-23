@@ -16,6 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
+        // Machine-to-machine trigger: authenticated by token, no session.
+        $middleware->validateCsrfTokens(except: [
+            'api/schedules/refresh',
+        ]);
+
         // Both deployments put a proxy in front of PHP (Render's load balancer,
         // nginx on a VPS) and never expose the app port publicly, so forwarded
         // headers can be trusted. Without this Laravel generates http:// URLs

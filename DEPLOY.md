@@ -8,22 +8,20 @@ their own web server and will fight the nginx config below.
 
 | Requirement | Why |
 |---|---|
-| PHP 8.4+ with `xml`, `mbstring`, `curl`, `zip`, and a PDO driver | `xml` is **required** — the scraper uses `DOMDocument`/`DOMXPath` |
-| Node.js 22 | Build-time only for assets, **and at runtime** for Browsershot |
-| Chrome + `chrome-headless-shell` | `scrape:schedules` drives a real browser via Browsershot |
-| `proc_open` / `exec` enabled | Browsershot shells out to Node |
-| ~512MB free RAM during the scrape | Chrome's working set |
-| A real cron daemon | Drives Laravel's scheduler |
+| PHP 8.4+ with `mbstring`, `curl`, `zip`, and a PDO driver | Laravel 13's Symfony packages require 8.4 |
+| Node.js 22 | Build-time only, to compile assets |
+| A cron daemon **or** an external cron service | Refreshes the timetable weekly |
 | HTTPS | **Service workers do not register over plain HTTP** — the PWA stays dormant without it |
 
-Shared hosting cannot satisfy rows 2–4. That is why this app needs a VPS.
+That is an ordinary PHP app. `scrape:schedules` reads the source timetable
+over plain HTTP, so there is no headless browser, no Node at runtime and no
+`proc_open` requirement — this runs fine on shared hosting as well as a VPS.
 
 ---
 
 ## 1. Create the deploy user
 
-Everything below runs as `deploy`, **including the Chrome install**. This matters —
-see [Chrome can't be found](#chrome-cant-be-found).
+Everything below runs as `deploy`.
 
 ```bash
 adduser deploy && usermod -aG sudo deploy
@@ -100,36 +98,15 @@ sudo chown -R deploy:www-data storage bootstrap/cache
 sudo chmod -R 775 storage bootstrap/cache
 ```
 
-## 4. Install Chrome for the scraper
-
-**Run this as `deploy`, not as root.** Puppeteer caches browsers per-user under
-`~/.cache/puppeteer`, and the cron job runs as `deploy`.
-
-```bash
-cd /var/www/islandhip
-npx puppeteer browsers install chrome
-npx puppeteer browsers install chrome-headless-shell
-```
-
-Both are needed. Browsershot launches with `headless: 'shell'` by default, which
-uses `chrome-headless-shell` — installing plain `chrome` alone is not enough.
-
-Chrome also needs system libraries that the download does not include:
-
-```bash
-sudo apt install -y libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
-  libgbm1 libasound2t64 libpango-1.0-0 libcairo2 libxcomposite1 libxdamage1 \
-  libxfixes3 libxrandr2 libxkbcommon0
-```
-
-On Ubuntu 24.04 the package is `libasound2t64`; on 22.04 it is `libasound2`.
-
-**Verify before going further:**
+## 4. Check the timetable refresh
 
 ```bash
 php artisan scrape:schedules
-# expect: ✅ Done! ~215 schedules scraped and saved.
+# expect: ✅ Done! ~215 schedules saved.
 ```
+
+This is a single HTTPS request to the source timetable API, so it takes about
+a second. If it fails, the reason is logged to `storage/logs/laravel.log`.
 
 ## 5. nginx and HTTPS
 
@@ -217,37 +194,30 @@ php artisan up
 
 ## Troubleshooting
 
-### Chrome can't be found
+### The refresh fails to reach the API
 
 ```
-Could not find Chrome (ver. 1xx.x.xxxx.xx) ... cache path is ... /root/.cache/puppeteer
+❌ Refresh failed: could not reach the schedule API - ...
 ```
 
-Three usual causes:
-
-1. **Installed as the wrong user.** The cache path in the error names the user it
-   looked under. Re-run `npx puppeteer browsers install chrome` as the cron user,
-   or set `PUPPETEER_CACHE_DIR` to a shared path in `.env`.
-2. **Only `chrome` was installed.** Browsershot defaults to `headless: 'shell'`
-   and needs `chrome-headless-shell` too.
-3. **`npm config get ignore-scripts` is `true`**, so Puppeteer's postinstall never
-   downloaded a browser. Install the browsers explicitly as above rather than
-   changing that setting.
-
-### Chrome is found but won't start
-
-Missing system libraries. Find out which:
+Check outbound HTTPS is not blocked, then try the endpoint by hand:
 
 ```bash
-ldd ~/.cache/puppeteer/chrome*/*/chrome-linux64/chrome | grep "not found"
+curl -s -o /dev/null -w '%{http_code}
+' \
+  -H "apikey: $(php artisan tinker --execute='echo config("scraper.key");')" \
+  "$(php artisan tinker --execute='echo config("scraper.endpoint");')?select=id&limit=1"
 ```
 
-### The scrape reports 0 schedules
+A 401 means the source site rotated its public API key; update
+`SCHEDULE_API_KEY` in `.env`.
 
-That is a **failure**, not an empty week — it means the source site's markup
-changed and the XPath selectors no longer match. The command logs an error, exits
-non-zero, and deliberately **leaves the existing data untouched** rather than
-truncating the table. Fix the selectors in
+### The refresh reports 0 schedules
+
+That is a **failure**, not an empty week — it means the API returned nothing, so
+its shape has probably changed. The command logs an error, exits non-zero, and
+deliberately **leaves the existing data untouched** rather than emptying the
+table. Check the response shape against `expandToWeek()` in
 `app/Console/Commands/ScrapeSchedules.php`.
 
 ### Nothing happens on Saturday

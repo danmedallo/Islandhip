@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\ScheduleRefreshController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -52,3 +53,9 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+// Refresh trigger for an external cron service (cron-job.org and friends).
+// Token-authenticated, so it is excluded from CSRF in bootstrap/app.php.
+Route::match(['get', 'post'], '/api/schedules/refresh', ScheduleRefreshController::class)
+    ->middleware('throttle:6,1')
+    ->name('schedules.refresh');

@@ -4,61 +4,56 @@ namespace App\Console\Commands;
 
 use App\Support\ScheduleImporter;
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Spatie\Browsershot\Browsershot;
-use DOMDocument;
-use DOMXPath;
+use Illuminate\Support\Str;
 use Throwable;
 
 class ScrapeSchedules extends Command
 {
     protected $signature = 'scrape:schedules';
-    protected $description = 'Scrape ferry schedules from Island Shipping';
-
-    protected const SOURCE_URL = 'https://islandshipping.com.ph/schedules';
+    protected $description = 'Refresh ferry schedules from the Island Shipping timetable API';
 
     public function handle(): int
     {
-        $this->info('🔍 Scraping schedules...');
+        $this->info('🔍 Fetching schedules...');
 
         try {
-            // Wait for JS to render then grab HTML
-            $html = Browsershot::url(self::SOURCE_URL)
-                ->waitUntilNetworkIdle()
-                ->setDelay(3000)
-                ->bodyHtml();
+            $recurring = $this->fetch();
         } catch (Throwable $e) {
-            return $this->reportFailure('could not fetch the schedule page', $e);
+            return $this->reportFailure('could not reach the schedule API', $e);
         }
 
-        try {
-            $schedules = $this->parseSchedules($html);
-        } catch (Throwable $e) {
-            return $this->reportFailure('could not parse the schedule page', $e);
+        if ($recurring === []) {
+            return $this->reportFailure(
+                'the API returned no active schedules - existing data left untouched'
+            );
         }
 
-        // A successful fetch that yields nothing means the source markup moved
-        // out from under our selectors. Stop before the truncate below, or a
-        // silent parse failure would wipe the table and leave the app empty.
+        $schedules = $this->expandToWeek($recurring);
+
+        // Recurring rows exist but none land in this week: treat that as a
+        // failure rather than emptying the table.
         if ($schedules === []) {
             return $this->reportFailure(
-                'fetched the page but parsed 0 schedules - the source markup has probably changed; existing data left untouched'
+                'no sailings fell within the coming week - existing data left untouched'
             );
         }
 
         try {
             app(ScheduleImporter::class)->replace($schedules);
         } catch (Throwable $e) {
-            return $this->reportFailure('could not save the scraped schedules', $e);
+            return $this->reportFailure('could not save the schedules', $e);
         }
 
         Log::info('scrape:schedules succeeded', [
             'count' => count($schedules),
-            'url' => self::SOURCE_URL,
+            'recurring' => count($recurring),
         ]);
 
-        $this->info('✅ Done! ' . count($schedules) . ' schedules scraped and saved.');
+        $this->info('✅ Done! ' . count($schedules) . ' schedules saved.');
 
         return self::SUCCESS;
     }
@@ -66,117 +61,114 @@ class ScrapeSchedules extends Command
     /**
      * @return array<int, array<string, mixed>>
      */
-    protected function parseSchedules(string $html): array
+    protected function fetch(): array
     {
-        // Parse HTML
-        $dom = new DOMDocument();
-        @$dom->loadHTML($html);
-        $xpath = new DOMXPath($dom);
+        $key = (string) config('scraper.key');
 
-        // Find all schedule buttons
-        $buttons = $xpath->query("//button[contains(@class, 'w-full')]");
+        $response = Http::withHeaders([
+            'apikey' => $key,
+            'Authorization' => 'Bearer ' . $key,
+        ])
+            ->acceptJson()
+            ->timeout(30)
+            ->retry(3, 2000, throw: false)
+            ->get(config('scraper.endpoint'), [
+                'select' => config('scraper.select'),
+                'is_active' => 'eq.true',
+            ]);
 
-        $schedules = [];
-
-        $dayHeaders = $xpath->query("//div[contains(@class, 'px-3 py-2 border-b')]");
-
-        $dates = [];
-        foreach ($dayHeaders as $header) {
-            $dayNode  = $xpath->query(".//p[contains(@class, 'text-xs')]", $header);
-            $dateNode = $xpath->query(".//p[contains(@class, 'text-sm')]", $header);
-
-            if ($dayNode->length && $dateNode->length) {
-                $day  = trim($dayNode->item(0)->textContent);  // e.g. "Sun"
-                $date = trim($dateNode->item(0)->textContent); // e.g. "May 17"
-                $dates[] = $this->resolveTripDate($date);
-            }
+        if ($response->failed()) {
+            throw new \RuntimeException(sprintf(
+                'API returned %d: %s',
+                $response->status(),
+                Str::limit($response->body(), 200)
+            ));
         }
 
-       // Get all day columns
-        $dayColumns = $xpath->query("//div[contains(@class, 'p-2 space-y-1.5')]");
+        return $response->json() ?? [];
+    }
 
-        $dayIndex = 0;
+    /**
+     * Each API row is a recurring sailing carrying a days_of_week array, so
+     * expand it into one dated row per matching day of the current
+     * Sunday-Saturday week — the window the source site itself displays.
+     *
+     * days_of_week uses the JavaScript convention, 0 = Sunday. Verified
+     * against the previous HTML scrape: an identical 215 rows for the same
+     * week, with zero differences.
+     *
+     * @param  array<int, array<string, mixed>>  $recurring
+     * @return array<int, array<string, mixed>>
+     */
+    protected function expandToWeek(array $recurring): array
+    {
+        $start = Carbon::today()->startOfWeek(CarbonInterface::SUNDAY);
+        $schedules = [];
 
-        foreach ($dayColumns as $column) {
-            $currentDate = $dates[$dayIndex] ?? null;
-            $buttons = $xpath->query(".//button[contains(@class, 'w-full text-left')]", $column);
+        for ($offset = 0; $offset < 7; $offset++) {
+            $date = $start->copy()->addDays($offset);
+            $dayOfWeek = (int) $date->format('w'); // 0 = Sunday
 
-            foreach ($buttons as $button) {
-                $routeNode = $xpath->query(".//p[contains(@class, 'text-primary')]", $button);
-                $timeNode  = $xpath->query(".//span[contains(@class, 'text-foreground font-medium')]", $button);
-                $infoNode  = $xpath->query(".//p[contains(@class, 'text-muted-foreground truncate mt-0.5')]", $button);
-
-                if ($routeNode->length && $timeNode->length && $infoNode->length) {
-                    $route  = trim($routeNode->item(0)->textContent);
-                    $time   = trim($timeNode->item(0)->textContent);
-                    $info   = trim($infoNode->item(0)->textContent);
-
-                    $parts    = explode('·', $info);
-                    $vessel   = trim($parts[0] ?? '');
-                    $duration = trim($parts[1] ?? '');
-
-                    $routeParts  = explode('→', $route);
-                    $origin      = trim($routeParts[0] ?? '');
-                    $destination = trim($routeParts[1] ?? '');
-
-                    $schedules[] = [
-                        'origin'      => $origin,
-                        'destination' => $destination,
-                        'time'        => $time,
-                        'vessel'      => $vessel,
-                        'duration'    => $duration,
-                        'trip_date'   => $currentDate,
-                    ];
+            foreach ($recurring as $row) {
+                if (! in_array($dayOfWeek, $row['days_of_week'] ?? [], true)) {
+                    continue;
                 }
+
+                $origin = data_get($row, 'routes.origin_port.name');
+                $destination = data_get($row, 'routes.destination_port.name');
+                $vessel = data_get($row, 'vessels.name');
+
+                if (! $origin || ! $destination || ! $vessel) {
+                    continue;
+                }
+
+                $schedules[] = [
+                    'origin' => $origin,
+                    'destination' => $destination,
+                    'time' => $this->formatTime((string) $row['departure_time']),
+                    'vessel' => $vessel,
+                    'duration' => $this->formatDuration((int) ($row['duration_minutes'] ?? 0)),
+                    'trip_date' => $date->toDateString(),
+                ];
             }
-            $dayIndex++;
         }
 
         return $schedules;
     }
 
+    /** "01:00:00" -> "1:00 AM" */
+    protected function formatTime(string $time): string
+    {
+        return Carbon::createFromFormat('H:i:s', $time)->format('g:i A');
+    }
+
+    /** 120 -> "2h", 90 -> "1h 30m" */
+    protected function formatDuration(int $minutes): string
+    {
+        $hours = intdiv($minutes, 60);
+        $rest = $minutes % 60;
+
+        return match (true) {
+            $hours && $rest => "{$hours}h {$rest}m",
+            (bool) $hours => "{$hours}h",
+            default => "{$rest}m",
+        };
+    }
 
     /**
-     * Log loudly and exit non-zero, so a cron run that fails is visible in the
-     * log and to the scheduler rather than disappearing into /dev/null.
+     * Log loudly and exit non-zero, so a failed run is visible in the log and
+     * to the scheduler rather than disappearing into /dev/null.
      */
     protected function reportFailure(string $reason, ?Throwable $e = null): int
     {
         Log::error("scrape:schedules failed: {$reason}", array_filter([
-            'url' => self::SOURCE_URL,
+            'endpoint' => config('scraper.endpoint'),
             'exception' => $e?->getMessage(),
             'class' => $e ? $e::class : null,
         ]));
 
-        $this->error('❌ Scrape failed: ' . $reason . ($e ? ' - ' . $e->getMessage() : ''));
+        $this->error('❌ Refresh failed: ' . $reason . ($e ? ' - ' . $e->getMessage() : ''));
 
         return self::FAILURE;
-    }
-
-    /**
-     * The source page labels each column "May 17" with no year. Pick the year
-     * that lands the date nearest today, so a Saturday scrape in late December
-     * still dates the following week's January sailings to the next year.
-     */
-    protected function resolveTripDate(string $label): ?string
-    {
-        $today = Carbon::today();
-        $best = null;
-
-        foreach ([$today->year - 1, $today->year, $today->year + 1] as $year) {
-            $date = Carbon::createFromFormat('M j, Y', "{$label}, {$year}");
-
-            if ($date === false) {
-                return null;
-            }
-
-            $date = $date->startOfDay();
-
-            if ($best === null || abs($date->diffInDays($today)) < abs($best->diffInDays($today))) {
-                $best = $date;
-            }
-        }
-
-        return $best?->toDateString();
     }
 }

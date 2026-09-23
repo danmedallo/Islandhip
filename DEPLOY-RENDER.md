@@ -3,15 +3,15 @@
 An alternative to [DEPLOY.md](DEPLOY.md), for getting the site online **without
 paying and without a credit card**. Every account here signs in with GitHub.
 
-The trade-off: **the weekly scrape does not run automatically.** Render's free
-tier has no cron. You refresh the schedules yourself, from your own machine, in
-about fifteen seconds — see [Refreshing the schedules](#refreshing-the-schedules).
+Render's free tier has no cron, but the refresh is a single HTTP request, so a
+free external cron service can drive it — see
+[Refreshing the schedules](#refreshing-the-schedules).
 
 | | Render (free) | VPS ([DEPLOY.md](DEPLOY.md)) |
 |---|---|---|
 | Cost | free | ~$6/mo |
 | Cold start | 30–60s after ~15 min idle | none |
-| Automatic weekly scrape | ❌ manual | ✅ cron |
+| Automatic weekly refresh | ✅ external cron service | ✅ system cron |
 | Database | Postgres (Neon) | MySQL or SQLite on disk |
 | Server admin | none | yours |
 
@@ -86,30 +86,57 @@ Once live, check:
 
 ## Refreshing the schedules
 
-The scrape needs headless Chrome, which is deliberately **not** in the container —
-it would add ~300MB to an image that never runs it. Instead, run the scrape on
-your own machine, pointed at the deployed database:
+`scrape:schedules` reads the source timetable over plain HTTP — no browser, about
+a second — so it can run inside the web container and be triggered over HTTP.
+
+### 1. Set a token
+
+Generate one and add it to the Render environment:
+
+```
+SCHEDULE_REFRESH_TOKEN=<openssl rand -hex 24>
+```
+
+Leaving it unset disables the endpoint entirely (it answers `503`).
+
+### 2. Point a free cron service at it
+
+Any of cron-job.org, EasyCron or UptimeRobot will do. Give it:
+
+```
+https://your-service.onrender.com/api/schedules/refresh?token=YOUR_TOKEN
+```
+
+Weekly is enough — the source publishes a Sunday-to-Saturday window. Sunday
+early morning matches what the VPS cron would do.
+
+If the service supports custom headers, prefer a header over the query string,
+so the token stays out of access logs:
+
+```
+Authorization: Bearer YOUR_TOKEN
+```
+
+The endpoint accepts `GET` or `POST`, is rate limited to 6 requests a minute,
+and answers with JSON:
+
+```json
+{"ok":true,"message":"✅ Done! 215 schedules saved."}
+```
+
+A failure returns HTTP 500 with the reason, so the cron service's own
+failure alerts tell you when something broke.
+
+### Or run it from your machine
 
 ```bash
-DB_CONNECTION=pgsql \
-DB_HOST=<neon host> \
-DB_PORT=5432 \
-DB_DATABASE=<neon database> \
-DB_USERNAME=<neon user> \
-DB_PASSWORD=<neon password> \
-DB_SSLMODE=require \
 php artisan scrape:schedules
 ```
 
-That writes straight to production. Expect `✅ Done! ~215 schedules scraped and
-saved.` and the site reflects it immediately.
+against the deployed database, with the Neon credentials in the environment.
 
-Do this whenever the ferry schedule changes — weekly, if you want to match what
-the cron would have done. It is the exact same command the VPS cron runs.
-
-> Keep these credentials out of your committed `.env`. Either export them in your
-> shell for the one command, or keep a separate uncommitted `.env.production`
-> file.
+> **Cold starts:** if the instance is asleep, the first request may take 30–60s
+> to answer. Set the cron service's timeout generously, or let it retry.
 
 ---
 
@@ -125,9 +152,9 @@ is why the database is external and `SESSION_DRIVER`/`CACHE_STORE` point at it
 rather than at files. Do not switch `DB_CONNECTION` to `sqlite` here — the file
 would be wiped on every deploy.
 
-**No scheduler.** `routes/console.php` still defines the Saturday scrape, but
-nothing calls `php artisan schedule:run`, so it never fires. That is expected on
-this tier; the manual command above replaces it.
+**No scheduler.** `routes/console.php` still defines the Saturday refresh, but
+nothing calls `php artisan schedule:run`, so it never fires on this tier. The
+HTTP trigger above replaces it.
 
 ---
 

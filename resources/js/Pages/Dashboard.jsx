@@ -1,7 +1,23 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { Head, Link, usePage } from '@inertiajs/react';
+import useOnline from '@/Hooks/useOnline';
 
-function Tile({ href, icon, title, description }) {
+function Tile({ href, icon, title, description, disabled, disabledNote }) {
+    if (disabled) {
+        return (
+            <span
+                className="flex items-start gap-3 bg-white border border-gray-200 rounded-xl p-4 opacity-60 cursor-not-allowed"
+                title={disabledNote}
+            >
+                <span className="text-xl shrink-0" aria-hidden="true">{icon}</span>
+                <span>
+                    <span className="block text-sm font-semibold text-gray-900">{title}</span>
+                    <span className="block text-xs text-gray-500 mt-0.5">{disabledNote}</span>
+                </span>
+            </span>
+        );
+    }
+
     return (
         <Link
             href={href}
@@ -18,6 +34,7 @@ function Tile({ href, icon, title, description }) {
 
 export default function Dashboard() {
     const user = usePage().props.auth.user;
+    const online = useOnline();
     const firstName = user.name.split(' ')[0];
 
     return (
@@ -52,6 +69,8 @@ export default function Dashboard() {
                         icon="🎫"
                         title="Book a trip"
                         description="Reserve your next sailing"
+                        disabled={!online}
+                        disabledNote="Needs a connection"
                     />
                     <Tile
                         href="/routefare"

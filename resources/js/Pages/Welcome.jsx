@@ -1,6 +1,7 @@
 import { Head, Link } from "@inertiajs/react";
 import { useState } from "react";
 import AppLayout from "@/Layouts/AppLayout";
+import useOnline from '@/Hooks/useOnline';
 
 const origins = [
     "Hagnaya, San Remigio, Cebu",
@@ -19,6 +20,7 @@ const destinations = [
 ];
 
 export default function Welcome({ auth, todaysTrip }) {
+    const online = useOnline();
 
     const [from, setFrom]     = useState("");
     const [to, setTo]         = useState("");
@@ -67,12 +69,21 @@ export default function Welcome({ auth, todaysTrip }) {
                                 Masbate, and Negros. Daily trips, affordable fares.
                             </p>
                             <div className="flex flex-wrap gap-3">
-                                <a
-                                    href="/book"
-                                    className="px-6 py-3 bg-white text-green-800 font-semibold rounded-xl hover:bg-green-50 transition-colors text-sm"
-                                >
-                                    🎫 Book a Trip
-                                </a>
+                                {online ? (
+                                    <a
+                                        href="/book"
+                                        className="px-6 py-3 bg-white text-green-800 font-semibold rounded-xl hover:bg-green-50 transition-colors text-sm"
+                                    >
+                                        🎫 Book a Trip
+                                    </a>
+                                ) : (
+                                    <span
+                                        className="px-6 py-3 bg-white/40 text-white/70 font-semibold rounded-xl text-sm cursor-not-allowed"
+                                        title="Booking needs a connection"
+                                    >
+                                        🎫 Book a Trip — offline
+                                    </span>
+                                )}
                                 <Link
                                     href={route('schedule')}
                                     className="px-6 py-3 border border-white/40 text-white rounded-xl hover:bg-white/10 transition-colors text-sm"

@@ -37,6 +37,7 @@ class HandleInertiaRequests extends Middleware
             'ads' => [
                 'enabled' => (bool) config('ads.enabled'),
                 'sponsor' => config('ads.sponsor'),
+                'support' => config('ads.support'),
             ],
         ];
     }

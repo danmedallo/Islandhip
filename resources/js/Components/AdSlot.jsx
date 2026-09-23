@@ -1,5 +1,5 @@
 import { usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import useOnline from '@/Hooks/useOnline';
 
 /**
@@ -45,20 +45,50 @@ export default function AdSlot() {
     const ads = props.ads;
     const online = useOnline();
     const [dismissed, setDismissed] = useState(wasDismissed);
+    const [copied, setCopied] = useState(false);
+    const numberRef = useRef(null);
 
     if (!ads?.enabled || !CONTENT_PAGES.includes(component) || dismissed) {
         return null;
     }
 
     const { label, image, url, alt } = ads.sponsor ?? {};
+    const support = ads.support ?? {};
     const hasSponsor = Boolean(image && url);
+    const hasSupport = Boolean(support.number);
 
-    // A network script cannot load without a connection and would leave an
-    // empty bar pinned to the screen. A self-hosted image is cached with the
-    // rest of the app, so only the network case is gated.
-    if (!hasSponsor && !online) {
+    if (!hasSponsor && !hasSupport) {
         return null;
     }
+
+    // A network script cannot load without a connection and would leave an
+    // empty bar pinned to the screen. A self-hosted image and the coffee
+    // message are both part of the cached page, so only the network case is
+    // gated.
+    if (!hasSponsor && !hasSupport && !online) {
+        return null;
+    }
+
+    const copyNumber = async () => {
+        try {
+            await navigator.clipboard.writeText(support.number);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+        } catch {
+            // Clipboard blocked, or no user gesture to spend. Select the number
+            // instead so it can still be copied by hand rather than the button
+            // appearing to do nothing.
+            const node = numberRef.current;
+
+            if (node) {
+                const range = document.createRange();
+                range.selectNodeContents(node);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        }
+    };
 
     const dismiss = () => {
         setDismissed(true);
@@ -80,9 +110,11 @@ export default function AdSlot() {
                 style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
             >
                 <div className="max-w-6xl mx-auto h-[56px] px-3 flex items-center gap-3">
-                    <span className="text-[9px] uppercase tracking-widest text-gray-400 shrink-0 hidden sm:block">
-                        Sponsored
-                    </span>
+                    {hasSponsor && (
+                        <span className="text-[9px] uppercase tracking-widest text-gray-400 shrink-0 hidden sm:block">
+                            Sponsored
+                        </span>
+                    )}
 
                     <div className="flex-1 min-w-0 flex items-center justify-center">
                         {hasSponsor ? (
@@ -100,12 +132,25 @@ export default function AdSlot() {
                                 />
                             </a>
                         ) : (
-                            /*
-                             * An ad network's snippet goes here. Keep it inside
-                             * this box so the fixed height still applies and the
-                             * bar cannot grow over the page.
-                             */
-                            null
+                            <div className="flex items-center gap-2 min-w-0">
+                                <span className="text-lg shrink-0" aria-hidden="true">☕</span>
+                                <div className="min-w-0">
+                                    <p className="text-sm text-gray-700 leading-tight truncate">
+                                        {support.note || 'Enjoying the app? Buy me a coffee'}
+                                    </p>
+                                    <p className="text-xs text-gray-400 leading-tight truncate">
+                                        GCash <span ref={numberRef}>{support.number}</span>
+                                        {support.name ? ` · ${support.name}` : ''}
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={copyNumber}
+                                    className="shrink-0 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+                                >
+                                    {copied ? 'Copied' : 'Copy'}
+                                </button>
+                            </div>
                         )}
                     </div>
 

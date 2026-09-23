@@ -33,4 +33,18 @@ return [
         'alt' => env('ADS_SPONSOR_ALT'),       // describes the banner for screen readers
     ],
 
+    /*
+    | Shown when no sponsor is configured, so the slot earns something rather
+    | than sitting empty. Not labelled "Sponsored" — it is a request, not an ad.
+    |
+    | The number is published to everyone who opens the app, so use one you are
+    | happy to have public.
+    */
+
+    'support' => [
+        'name' => env('ADS_SUPPORT_NAME'),       // the GCash account name
+        'number' => env('ADS_SUPPORT_NUMBER'),   // e.g. "0917 123 4567"
+        'note' => env('ADS_SUPPORT_NOTE'),       // optional one-liner
+    ],
+
 ];

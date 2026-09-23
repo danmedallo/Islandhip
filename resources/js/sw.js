@@ -15,13 +15,28 @@ const FONT_CACHE = `islandship-fonts-${VERSION}`;
 precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
 
-// offline.html lives in public/, which Laravel serves directly and Vite never
-// touches, so it is cached here rather than precached with the build output.
+// Warmed at install so the public pages are readable offline even if the
+// visitor never opened them. Relying on NetworkFirst alone meant a page was
+// only available offline if it had already been visited, which made "works
+// offline" true of the homepage and nothing else.
+const WARM_PAGES = ['/', '/schedule', '/routefare', '/route', '/install'];
+
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches
-            .open(OFFLINE_CACHE)
-            .then((cache) => cache.add(new Request(OFFLINE_URL, { cache: 'reload' }))),
+        (async () => {
+            // offline.html lives in public/, which Laravel serves directly and
+            // Vite never touches, so it is cached here rather than precached
+            // with the build output.
+            const offline = await caches.open(OFFLINE_CACHE);
+            await offline.add(new Request(OFFLINE_URL, { cache: 'reload' }));
+
+            // allSettled, not all: one unreachable page must not abort the
+            // install and leave the worker unregistered.
+            const pages = await caches.open(PAGE_CACHE);
+            await Promise.allSettled(
+                WARM_PAGES.map((url) => pages.add(new Request(url, { cache: 'reload' }))),
+            );
+        })(),
     );
 });
 

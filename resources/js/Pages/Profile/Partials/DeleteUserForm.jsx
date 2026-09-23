@@ -48,8 +48,8 @@ export default function DeleteUserForm({ className = '' }) {
     return (
         <section className={`space-y-6 ${className}`}>
             <header>
-                <h2 className="text-lg font-medium text-gray-900">
-                    Delete Account
+                <h2 className="text-base font-semibold text-gray-900">
+                    Delete account
                 </h2>
 
                 <p className="mt-1 text-sm text-gray-600">
@@ -61,12 +61,12 @@ export default function DeleteUserForm({ className = '' }) {
             </header>
 
             <DangerButton onClick={confirmUserDeletion}>
-                Delete Account
+                Delete account
             </DangerButton>
 
             <Modal show={confirmingUserDeletion} onClose={closeModal}>
                 <form onSubmit={deleteUser} className="p-6">
-                    <h2 className="text-lg font-medium text-gray-900">
+                    <h2 className="text-base font-semibold text-gray-900">
                         Are you sure you want to delete your account?
                     </h2>
 
@@ -110,7 +110,7 @@ export default function DeleteUserForm({ className = '' }) {
                         </SecondaryButton>
 
                         <DangerButton className="ms-3" disabled={processing}>
-                            Delete Account
+                            Delete account
                         </DangerButton>
                     </div>
                 </form>

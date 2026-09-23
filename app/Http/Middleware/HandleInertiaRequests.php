@@ -34,6 +34,11 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'ads' => [
+                'enabled' => (bool) config('ads.enabled'),
+                'sponsor' => config('ads.sponsor'),
+                'support' => config('ads.support'),
+            ],
         ];
     }
 }

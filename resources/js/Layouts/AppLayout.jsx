@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import InstallBanner from '@/Components/InstallBanner';
+import AdSlot from '@/Components/AdSlot';
 
 export default function AppLayout({ children }) {
     const { auth } = usePage().props;
@@ -182,6 +183,8 @@ export default function AppLayout({ children }) {
 
             {/* Page Content */}
             <main>{children}</main>
+
+            <AdSlot />
 
         </div>
     );

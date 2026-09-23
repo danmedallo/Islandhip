@@ -80,4 +80,10 @@ RUN chmod +x /usr/local/bin/entrypoint \
 # Production PHP defaults (the base image ships the development php.ini).
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
+# The binary ships with cap_net_bind_service so it can bind :80. Render (and
+# other platforms) run containers with no-new-privileges, which refuses to exec
+# a file carrying capabilities — "Operation not permitted", exit 126. The port
+# is assigned by $PORT and is never privileged, so drop the capability.
+RUN setcap -r /usr/local/bin/frankenphp
+
 ENTRYPOINT ["entrypoint"]

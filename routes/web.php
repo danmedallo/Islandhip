@@ -38,6 +38,10 @@ Route::get('/routefare', function () {
 Route::get('/scheduleDetails/{id}', [ScheduleController::class, 'scheduleDetails'])
     ->name('scheduleDetails');
 
+Route::get('/install', function () {
+    return Inertia::render('Install');
+})->name('install');
+
 Route::get('/book', function () {
     return Inertia::render('BookTrip');
 })->name('book');

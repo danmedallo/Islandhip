@@ -63,6 +63,7 @@ const PUBLIC_PAGES = [
     /^\/route$/,
     /^\/routefare$/,
     /^\/book$/,
+    /^\/install$/,
 ];
 
 const isPublicPage = (url) =>

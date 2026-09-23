@@ -101,7 +101,7 @@ export default function Schedule({ schedules, filters = {} }) {
                 <div className="max-w-3xl mx-auto px-4 -mt-6 pb-20">
 
                     {/* Filter Card */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-5">
+                    <div className="relative z-10 bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-5">
                         <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">🔍 Filter Trips</p>
                         <div className="space-y-3">
                             {/* From */}
@@ -147,13 +147,13 @@ export default function Schedule({ schedules, filters = {} }) {
                                     onClick={handleSearch}
                                     className="flex-1 h-11 bg-green-700 text-white rounded-xl text-sm font-semibold hover:bg-green-800 transition-colors"
                                 >
-                                    🔍 Search
+                                    Search
                                 </button>
                                 <button
                                     onClick={handleReset}
-                                    className="h-11 px-5 border border-gray-200 text-gray-400 rounded-xl text-sm hover:bg-gray-50 transition-colors"
+                                    className="h-11 px-5 border border-gray-200 text-gray-500 rounded-xl text-sm hover:bg-gray-50 transition-colors"
                                 >
-                                    ✕ Reset
+                                    Clear filters
                                 </button>
                             </div>
                         </div>
@@ -168,7 +168,7 @@ export default function Schedule({ schedules, filters = {} }) {
                             </h2>
                         </div>
                         {hasFilters && (
-                            <button onClick={handleReset} className="text-xs text-gray-400 hover:text-gray-600 underline">
+                            <button onClick={handleReset} className="text-xs text-gray-500 hover:text-gray-700 underline">
                                 Clear filters
                             </button>
                         )}
@@ -181,7 +181,7 @@ export default function Schedule({ schedules, filters = {} }) {
                             <p className="text-gray-500 text-sm font-medium">No schedules found.</p>
                             <p className="text-gray-400 text-xs mt-1 mb-4">Try changing the route or date.</p>
                             <button onClick={handleReset} className="text-sm text-green-700 font-semibold hover:underline">
-                                Reset filters
+                                Clear filters
                             </button>
                         </div>
                     )}

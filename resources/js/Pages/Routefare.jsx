@@ -273,7 +273,7 @@ function FareCalculator({ data }) {
                 </button>
                 <button
                     onClick={reset}
-                    className="h-11 px-4 border border-gray-200 bg-white text-gray-400 rounded-xl text-sm hover:bg-gray-50 transition-colors"
+                    className="h-11 px-4 border border-gray-200 bg-white text-gray-500 rounded-xl text-sm hover:bg-gray-50 transition-colors"
                 >
                     Reset
                 </button>

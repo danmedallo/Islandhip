@@ -1,3 +1,4 @@
+import { Head } from '@inertiajs/react';
 import AppLayout from "@/Layouts/AppLayout";
 const routes = [
     {
@@ -29,6 +30,8 @@ export default function Route({ auth }) {
 
 return (
     <AppLayout>
+            <Head title="Our Route" />
+
                 {/* Hero */}
                 <div className="bg-gradient-to-br from-green-900 via-green-700 to-teal-600 px-4 pt-10 pb-20 relative overflow-hidden">
                     <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "repeating-linear-gradient(45deg,#fff 0,#fff 1px,transparent 0,transparent 50%)", backgroundSize: "20px 20px" }} />

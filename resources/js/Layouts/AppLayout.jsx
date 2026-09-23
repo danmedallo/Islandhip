@@ -32,6 +32,9 @@ export default function AppLayout({ children }) {
                         <a href="/schedule" className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors">
                             Schedules
                         </a>
+                        <a href="/route" className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors">
+                            Our Route
+                        </a>
                         <a href="/routefare" className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors">
                             Fares
                         </a>

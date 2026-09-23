@@ -1,6 +1,7 @@
 
 import { Head, Link } from "@inertiajs/react";
 import { useState } from "react";
+import useOnline from "@/Hooks/useOnline";
 import { router } from "@inertiajs/react";
 import AppLayout from "@/Layouts/AppLayout";
 
@@ -32,6 +33,7 @@ const destinations = [
 const defaultColor = { dot: "bg-gray-400", text: "text-gray-600", badge: "bg-gray-100" };
 
 export default function Schedule({ schedules, filters = {} }) {
+    const online = useOnline();
     const [from, setFrom] = useState(filters.from ?? "");
     const [to, setTo]     = useState(filters.to ?? "");
     const [date, setDate] = useState(filters.date ?? "");
@@ -103,6 +105,13 @@ export default function Schedule({ schedules, filters = {} }) {
                     {/* Filter Card */}
                     <div className="relative z-10 bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-5">
                         <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">🔍 Filter Trips</p>
+
+                        {!online && (
+                            <p className="mb-3 rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 text-xs text-gray-500">
+                                You're offline — showing the schedule you last loaded.
+                                Filtering and paging need a connection.
+                            </p>
+                        )}
                         <div className="space-y-3">
                             {/* From */}
                             <div>
@@ -145,13 +154,15 @@ export default function Schedule({ schedules, filters = {} }) {
                             <div className="flex gap-2 pt-1">
                                 <button
                                     onClick={handleSearch}
-                                    className="flex-1 h-11 bg-green-700 text-white rounded-xl text-sm font-semibold hover:bg-green-800 transition-colors"
+                                    disabled={!online}
+                                    className="flex-1 h-11 bg-green-700 text-white rounded-xl text-sm font-semibold hover:bg-green-800 transition-colors disabled:bg-green-700/50 disabled:cursor-not-allowed"
                                 >
                                     Search
                                 </button>
                                 <button
                                     onClick={handleReset}
-                                    className="h-11 px-5 border border-gray-200 text-gray-500 rounded-xl text-sm hover:bg-gray-50 transition-colors"
+                                    disabled={!online}
+                                    className="h-11 px-5 border border-gray-200 text-gray-500 rounded-xl text-sm hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     Clear filters
                                 </button>
@@ -258,9 +269,9 @@ export default function Schedule({ schedules, filters = {} }) {
                                     <div className="flex items-center justify-between">
                                         <button
                                             onClick={() => goToPage(current_page - 1)}
-                                            disabled={current_page === 1}
+                                            disabled={current_page === 1 || !online}
                                             className={`flex items-center gap-1 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                                                current_page === 1
+                                                current_page === 1 || !online
                                                     ? "text-gray-300 cursor-not-allowed"
                                                     : "border border-gray-200 text-gray-600 hover:bg-gray-50 active:bg-gray-100"
                                             }`}
@@ -277,9 +288,9 @@ export default function Schedule({ schedules, filters = {} }) {
 
                                         <button
                                             onClick={() => goToPage(current_page + 1)}
-                                            disabled={current_page === last_page}
+                                            disabled={current_page === last_page || !online}
                                             className={`flex items-center gap-1 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                                                current_page === last_page
+                                                current_page === last_page || !online
                                                     ? "text-gray-300 cursor-not-allowed"
                                                     : "border border-gray-200 text-gray-600 hover:bg-gray-50 active:bg-gray-100"
                                             }`}

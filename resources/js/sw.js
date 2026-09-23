@@ -4,7 +4,7 @@ import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching';
 import { NavigationRoute, registerRoute, setCatchHandler } from 'workbox-routing';
 import { CacheFirst, NetworkFirst, NetworkOnly, StaleWhileRevalidate } from 'workbox-strategies';
 
-const VERSION = 'v1';
+const VERSION = 'v2';
 const OFFLINE_URL = '/offline.html';
 const OFFLINE_CACHE = `islandship-offline-${VERSION}`;
 const PAGE_CACHE = `islandship-pages-${VERSION}`;
@@ -54,15 +54,19 @@ self.addEventListener('message', (event) => {
     }
 });
 
-// Pages that render without a session, and so are safe to keep for offline
-// reading. Anything not listed here stays online-only.
+// Pages that render without a session and carry no live state, so they are
+// safe to keep for offline reading. Anything not listed here stays online-only.
+//
+// /book is deliberately absent. Serving a cached booking form offline would let
+// someone fill it in and believe a seat was reserved, so booking always
+// requires a connection. The version bump above purges it from installs that
+// cached it under v1.
 const PUBLIC_PAGES = [
     /^\/$/,
     /^\/schedule$/,
     /^\/scheduleDetails\/[^/]+$/,
     /^\/route$/,
     /^\/routefare$/,
-    /^\/book$/,
     /^\/install$/,
 ];
 

@@ -71,13 +71,23 @@
             </svg>
         </div>
 
-        <h1>You're offline</h1>
-        <p>This page needs a connection. Schedules and fares you've already opened are still available.</p>
+        <h1 id="title">You're offline</h1>
+        <p id="message">This page needs a connection. Schedules and fares you've already opened are still available.</p>
 
         <button type="button" onclick="location.reload()">Try again</button>
     </main>
 
     <script>
+        // The worker answers the failed navigation with this page, so the
+        // address bar still holds whatever the visitor asked for. Booking is
+        // deliberately never cached, so say why rather than leaving them to
+        // guess.
+        if (location.pathname === '/book') {
+            document.getElementById('title').textContent = 'Booking needs a connection';
+            document.getElementById('message').textContent =
+                'Seats are confirmed live, so a trip cannot be booked offline. Schedules and fares you have already opened are still available.';
+        }
+
         addEventListener('online', () => location.reload());
     </script>
 </body>

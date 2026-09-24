@@ -62,4 +62,18 @@ require __DIR__.'/auth.php';
 // Token-authenticated, so it is excluded from CSRF in bootstrap/app.php.
 Route::match(['get', 'post'], '/api/schedules/refresh', ScheduleRefreshController::class)
     ->middleware('throttle:6,1')
+    // A token-authenticated machine call: it has no session, needs none, and
+    // should not leave one behind. Without this the cron wrote a row to the
+    // sessions table on every run, which simply accumulates.
+    ->withoutMiddleware([
+        \Illuminate\Session\Middleware\StartSession::class,
+        // CSRF too: it reads the session, which is no longer there. Note the
+        // class is PreventRequestForgery in Laravel 13 — ValidateCsrfToken and
+        // VerifyCsrfToken are aliases and excluding those matches nothing.
+        \Illuminate\Foundation\Http\Middleware\PreventRequestForgery::class,
+        \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+        \Illuminate\Cookie\Middleware\EncryptCookies::class,
+        \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+        \App\Http\Middleware\HandleInertiaRequests::class,
+    ])
     ->name('schedules.refresh');

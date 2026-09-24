@@ -9,11 +9,13 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// Deliberately UTC: this lands at 05:00 Sunday Manila time, ahead of the
-// week's traffic. Needs `* * * * * php artisan schedule:run` on the server.
+// Sunday, not Saturday. The scrape builds the Sunday-to-Saturday window
+// containing "today", so a Saturday run rebuilds the week that is ending and
+// the new week is never fetched. 01:00 UTC is 09:00 Sunday in Manila — inside
+// the new week in both zones.
 Schedule::command('scrape:schedules')
-    ->saturdays()
-    ->at('21:00')
+    ->sundays()
+    ->at('01:00')
     // Backstop for failures the command cannot log itself: a fatal error, the
     // process being killed, or artisan never getting far enough to run.
     ->onFailure(fn () => Log::error('scrape:schedules cron run exited non-zero'))

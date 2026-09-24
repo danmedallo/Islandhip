@@ -22,6 +22,14 @@ return [
 
     'key' => env('SCHEDULE_API_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ybWx2Zm1oeW5icm9neGl0aWFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4NzYxMjIsImV4cCI6MjA4ODQ1MjEyMn0.hKVFeWYzJ47VWo6txBab03Psddld61rmsj-TyKkoTko'),
 
+    /*
+    | The window is anchored to this zone rather than APP_TIMEZONE. The app runs
+    | on UTC, where a Saturday-evening run in Manila is still Saturday, so it
+    | rebuilt the week that was ending.
+    */
+
+    'timezone' => env('SCHEDULE_TIMEZONE', 'Asia/Manila'),
+
     'select' => 'id,days_of_week,departure_time,duration_minutes,routes!inner(origin_port:ports!routes_origin_port_id_fkey(name),destination_port:ports!routes_destination_port_id_fkey(name)),vessels!inner(name)',
 
     /*

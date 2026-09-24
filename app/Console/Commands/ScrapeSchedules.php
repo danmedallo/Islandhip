@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Support\ScheduleImporter;
+use App\Support\ScheduleWindow;
 use Carbon\Carbon;
-use Carbon\CarbonInterface;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -51,9 +51,10 @@ class ScrapeSchedules extends Command
         Log::info('scrape:schedules succeeded', [
             'count' => count($schedules),
             'recurring' => count($recurring),
+            'window' => ScheduleWindow::label(),
         ]);
 
-        $this->info('✅ Done! ' . count($schedules) . ' schedules saved.');
+        $this->info('✅ Done! ' . count($schedules) . ' schedules saved for ' . ScheduleWindow::label() . '.');
 
         return self::SUCCESS;
     }
@@ -102,11 +103,9 @@ class ScrapeSchedules extends Command
      */
     protected function expandToWeek(array $recurring): array
     {
-        $start = Carbon::today()->startOfWeek(CarbonInterface::SUNDAY);
         $schedules = [];
 
-        for ($offset = 0; $offset < 7; $offset++) {
-            $date = $start->copy()->addDays($offset);
+        foreach (ScheduleWindow::days() as $date) {
             $dayOfWeek = (int) $date->format('w'); // 0 = Sunday
 
             foreach ($recurring as $row) {

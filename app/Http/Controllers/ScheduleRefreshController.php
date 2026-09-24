@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Schedules;
+use App\Support\ScheduleWindow;
 use Carbon\Carbon;
-use Carbon\CarbonInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -74,8 +74,8 @@ class ScheduleRefreshController extends Controller
      */
     protected function alreadyCurrent(): ?array
     {
-        $start = Carbon::today()->startOfWeek(CarbonInterface::SUNDAY);
-        $end = $start->copy()->addDays(6);
+        $start = ScheduleWindow::start();
+        $end = ScheduleWindow::end();
 
         $storedStart = Schedules::min('trip_date');
         $storedEnd = Schedules::max('trip_date');
@@ -92,15 +92,14 @@ class ScheduleRefreshController extends Controller
             return null;
         }
 
-        // The window matches, so the rows already cover the right days. Only
-        // treat it as done if they were written for this window rather than
-        // left over from the last time these dates came round.
-        if (Carbon::parse($refreshedAt)->lt($start)) {
-            return null;
-        }
+        // No check on when it was written. trip_date values are absolute, so a
+        // stored span equal to the computed span is by definition this window's
+        // data. An earlier version required the write to fall inside the
+        // window, which broke the Saturday run: it prepares the coming week, so
+        // the rows are always written the day before that window begins.
 
         return [
-            'window' => $start->toDateString() . ' .. ' . $end->toDateString(),
+            'window' => ScheduleWindow::label(),
             'refreshed_at' => Carbon::parse($refreshedAt)->toIso8601String(),
         ];
     }

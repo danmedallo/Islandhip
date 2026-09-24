@@ -72,6 +72,16 @@ RUN chmod +x /usr/local/bin/entrypoint \
  && mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache \
  && chown -R www-data:www-data storage bootstrap/cache
 
+# Caddy opens its admin API on :2019 as well as the site's own port. Render
+# detects the port to route to and picked 2019, so every public request hit the
+# admin API and was refused:
+#
+#     admin.api  request error  host not allowed: <app>.onrender.com  403
+#
+# Nothing here uses the admin API, so closing it leaves exactly one open port
+# for the platform to find.
+ENV CADDY_GLOBAL_OPTIONS="admin off"
+
 # Production PHP defaults (the base image ships the development php.ini).
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 

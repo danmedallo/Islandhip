@@ -138,7 +138,7 @@ export default function BookTrip() {
                             📅 View Schedules
                         </a>
                         <a
-                            href="/fares"
+                            href="/routefare"
                             className="flex-1 py-3.5 bg-white border border-gray-200 text-gray-600 rounded-xl text-sm font-semibold text-center hover:bg-gray-50 transition-colors"
                         >
                             💰 View Fares

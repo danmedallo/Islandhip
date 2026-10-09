@@ -4,14 +4,14 @@ An alternative to [DEPLOY.md](DEPLOY.md), for getting the site online **without
 paying and without a credit card**. Every account here signs in with GitHub.
 
 Render's free tier has no cron, but the refresh is a single HTTP request, so a
-free external cron service can drive it — see
+scheduled Neon Function on the database project drives it — see
 [Refreshing the schedules](#refreshing-the-schedules).
 
 | | Render (free) | VPS ([DEPLOY.md](DEPLOY.md)) |
 |---|---|---|
 | Cost | free | ~$6/mo |
 | Cold start | 30–60s after ~15 min idle | none |
-| Automatic weekly refresh | ✅ external cron service | ✅ system cron |
+| Automatic weekly refresh | ✅ Neon scheduled function | ✅ system cron |
 | Database | Postgres (Neon) | MySQL or SQLite on disk |
 | Server admin | none | yours |
 
@@ -99,23 +99,50 @@ SCHEDULE_REFRESH_TOKEN=<openssl rand -hex 24>
 
 Leaving it unset disables the endpoint entirely (it answers `503`).
 
-### 2. Point a free cron service at it
+### 2. Deploy the Neon Function
 
-Any of cron-job.org, EasyCron or UptimeRobot will do. Give it:
+`neon/` holds a Neon Function that calls the endpoint, and a schedule trigger
+that runs it **Saturdays at 21:00 Manila** (`0 13 * * 6` — triggers only take
+UTC), the same slot as `routes/console.php`. It runs on Neon's side, so it fires
+whether or not the database compute is awake.
 
+It needs the [Neon CLI](https://neon.com/docs/reference/neon-cli), signed in to
+the account that owns the `IslandShipping` project:
+
+```bash
+npm i -g neon@latest
+neon auth
 ```
-https://your-service.onrender.com/api/schedules/refresh?token=YOUR_TOKEN
+
+Then, from `neon/`:
+
+```bash
+npm install
+cp .env.example .env    # the Render URL, and the same token as step 1
+npm run plan            # dry run: expect "+ function refresh" and "+ trigger"
+npm run deploy
 ```
 
-Weekly is enough — the source publishes a Sunday-to-Saturday window. Sunday
-early morning matches what the VPS cron would do.
+`npm run deploy` applies `neon/neon.ts` to the `production` branch. The function
+reads its URL and token from `.env` at deploy time and keeps a copy, so after
+changing either one — rotating the token on Render, say — deploy again.
 
-If the service supports custom headers, prefer a header over the query string,
-so the token stays out of access logs:
+Check it:
 
+```bash
+neon triggers list --project-id rough-tree-76884903 --branch production
+neon logs query --project-id rough-tree-76884903 --branch production --source function --since 7d
 ```
-Authorization: Bearer YOUR_TOKEN
-```
+
+Each run logs one JSON line with the endpoint's status and reply. A `409` is
+the app declining a week it already has, and counts as success. The function
+retries a timeout or a `502`–`504` (an instance still waking) twice, 20 seconds
+apart; anything else is reported as it came back.
+
+The function URL is public, but the function refuses any request that is not a
+trigger delivery from Neon, so it cannot be used to fire refreshes.
+
+### How the endpoint answers
 
 The endpoint accepts `GET` or `POST`, is rate limited to 6 requests a minute,
 and answers with JSON:
@@ -124,8 +151,14 @@ and answers with JSON:
 {"ok":true,"message":"✅ Done! 215 schedules saved."}
 ```
 
-A failure returns HTTP 500 with the reason, so the cron service's own
-failure alerts tell you when something broke.
+It takes the token only as an `Authorization: Bearer YOUR_TOKEN` header, so it
+never appears in a URL or an access log. A failure returns HTTP 500 with the
+reason. Add `force=1` to refresh a week that is already stored:
+
+```bash
+curl -X POST -H "Authorization: Bearer YOUR_TOKEN" \
+  "https://<your-service>.onrender.com/api/schedules/refresh?force=1"
+```
 
 ### Or run it from your machine
 
@@ -136,7 +169,7 @@ php artisan scrape:schedules
 against the deployed database, with the Neon credentials in the environment.
 
 > **Cold starts:** if the instance is asleep, the first request may take 30–60s
-> to answer. Set the cron service's timeout generously, or let it retry.
+> to answer. The function allows each attempt two minutes.
 
 ---
 
@@ -154,7 +187,7 @@ would be wiped on every deploy.
 
 **No scheduler.** `routes/console.php` still defines the Saturday refresh, but
 nothing calls `php artisan schedule:run`, so it never fires on this tier. The
-HTTP trigger above replaces it.
+Neon Function above replaces it.
 
 ---
 
@@ -164,4 +197,10 @@ When you outgrow the cold starts, follow [DEPLOY.md](DEPLOY.md). The code needs
 no changes. You can either keep Neon as the database (just copy the same `DB_*`
 values into the server's `.env`) or migrate to local MySQL with `pg_dump`.
 
-Once the VPS cron is running, the manual refresh above becomes unnecessary.
+Once the VPS cron is running, disable the Neon trigger so the week is not
+refreshed twice:
+
+```bash
+neon triggers list --project-id rough-tree-76884903 --branch production
+neon triggers disable <id> --project-id rough-tree-76884903 --branch production
+```

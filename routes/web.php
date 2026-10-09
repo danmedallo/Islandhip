@@ -58,7 +58,7 @@ Route::middleware('auth')->group(function () {
 
 require __DIR__.'/auth.php';
 
-// Refresh trigger for an external cron service (cron-job.org and friends).
+// Refresh trigger, called weekly by the scheduled Neon Function in neon/.
 // Token-authenticated, so it is excluded from CSRF in bootstrap/app.php.
 Route::match(['get', 'post'], '/api/schedules/refresh', ScheduleRefreshController::class)
     ->middleware('throttle:6,1')

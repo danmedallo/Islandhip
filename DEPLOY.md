@@ -10,7 +10,7 @@ their own web server and will fight the nginx config below.
 |---|---|
 | PHP 8.4+ with `mbstring`, `curl`, `zip`, and a PDO driver | Laravel 13's Symfony packages require 8.4 |
 | Node.js 22 | Build-time only, to compile assets |
-| A cron daemon **or** an external cron service | Refreshes the timetable weekly |
+| A cron daemon **or** the Neon scheduled function ([DEPLOY-RENDER.md](DEPLOY-RENDER.md#refreshing-the-schedules)) | Refreshes the timetable weekly |
 | HTTPS | **Service workers do not register over plain HTTP** — the PWA stays dormant without it |
 
 That is an ordinary PHP app. `scrape:schedules` reads the source timetable
@@ -162,7 +162,7 @@ crontab -e
 ```
 
 The scrape itself is defined in `routes/console.php` and runs **Saturdays at
-21:00 UTC** (05:00 Sunday Manila). Confirm with:
+21:00 Manila** (13:00 UTC). Confirm with:
 
 ```bash
 php artisan schedule:list

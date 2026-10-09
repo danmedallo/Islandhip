@@ -1,0 +1,17 @@
+{
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "typecheck": "tsc",
+        "plan": "neon config plan --project-id rough-tree-76884903 --branch production --env .env",
+        "deploy": "neon deploy --project-id rough-tree-76884903 --branch production --env .env --no-env-pull"
+    },
+    "dependencies": {
+        "@neon/functions": "^0.11.0"
+    },
+    "devDependencies": {
+        "@neon/config": "^1.8.6",
+        "@types/node": "^24.19.1",
+        "typescript": "^7.0.2"
+    }
+}

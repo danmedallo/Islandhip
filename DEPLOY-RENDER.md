@@ -136,8 +136,15 @@ neon logs query --project-id rough-tree-76884903 --branch production --source fu
 
 Each run logs one JSON line with the endpoint's status and reply. A `409` is
 the app declining a week it already has, and counts as success. The function
-retries a timeout or a `502`–`504` (an instance still waking) twice, 20 seconds
-apart; anything else is reported as it came back.
+retries a timeout, a `429` (a rate limit or Cloudflare's bot challenge in front
+of Render) or a `502`–`504` (an instance still waking) up to five attempts in
+all, waiting 30s, 60s, 120s, then 180s, or what `Retry-After` asks for. It
+starts no new attempt after 12 minutes, inside the 15 a Neon Function has.
+Anything else is reported as it came back.
+
+If every Saturday run ends in a `429` with a "Just a moment..." page, Cloudflare
+is blocking Neon's addresses outright and retrying will not help; run the
+refresh by hand (below) and move the trigger elsewhere.
 
 The function URL is public, but the function refuses any request that is not a
 trigger delivery from Neon, so it cannot be used to fire refreshes.

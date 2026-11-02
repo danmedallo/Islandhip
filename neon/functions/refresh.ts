@@ -2,16 +2,29 @@ import { parseTriggerInvocation } from '@neon/functions/triggers';
 
 // Render's free instance sleeps after ~15 minutes idle and takes 30–60s to
 // wake, so each attempt gets far longer than the refresh itself needs (about a
-// second). Three attempts still finish well inside the 15-minute limit a Neon
-// Function has to start answering.
+// second).
 const ATTEMPT_TIMEOUT_MS = 120_000;
-const ATTEMPTS = 3;
-const RETRY_DELAY_MS = 20_000;
+const ATTEMPTS = 5;
 
-// Statuses where the app most likely never ran: Render's proxy giving up on an
-// instance that is still starting. Anything else is the app's own answer and is
-// reported rather than retried — a 500 means the scrape itself failed.
-const RETRYABLE = new Set([502, 503, 504]);
+// A Neon Function has 15 minutes to answer. No new attempt starts after this
+// much time has passed, so even one that runs to its full timeout finishes
+// with a minute to spare.
+const BUDGET_MS = 12 * 60_000;
+
+// Waits between attempts double from the first delay up to the cap: 30s, 60s,
+// 120s, 180s. A Retry-After header replaces the computed wait, within the same
+// bounds.
+const FIRST_DELAY_MS = 30_000;
+const MIN_DELAY_MS = 20_000;
+const MAX_DELAY_MS = 180_000;
+
+// Statuses where the app most likely never ran, so another attempt is worth
+// making. 502–504 is Render's proxy giving up on an instance that is still
+// starting. 429 is a rate limit: on 2026-10-31 Cloudflare, in front of Render,
+// answered every attempt with a 429 bot challenge and the week was never
+// refreshed. Anything else is the app's own answer and is reported rather than
+// retried — a 500 means the scrape itself failed.
+const RETRYABLE = new Set([429, 502, 503, 504]);
 
 type Outcome = {
     ok: boolean;
@@ -60,8 +73,11 @@ export default {
 };
 
 async function refresh(url: string, token: string): Promise<Outcome> {
+    const started = Date.now();
+
     for (let attempt = 1; ; attempt++) {
-        const last = attempt === ATTEMPTS;
+        let outcome: Outcome;
+        let retryAfter: number | null = null;
 
         try {
             const response = await fetch(url, {
@@ -74,13 +90,7 @@ async function refresh(url: string, token: string): Promise<Outcome> {
                 signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
             });
 
-            if (RETRYABLE.has(response.status) && !last) {
-                await response.body?.cancel();
-                await sleep(RETRY_DELAY_MS);
-                continue;
-            }
-
-            return {
+            outcome = {
                 // 409 is the app declining a week it has already stored. That is
                 // the state the schedule exists to reach, so it is not a failure.
                 ok: response.ok || response.status === 409,
@@ -88,16 +98,45 @@ async function refresh(url: string, token: string): Promise<Outcome> {
                 attempts: attempt,
                 body: await readBody(response),
             };
-        } catch (error) {
-            // Network failure or the attempt timing out.
-            if (!last) {
-                await sleep(RETRY_DELAY_MS);
-                continue;
+
+            if (!RETRYABLE.has(response.status)) {
+                return outcome;
             }
 
-            return { ok: false, status: null, attempts: attempt, body: String(error) };
+            retryAfter = parseRetryAfter(response.headers.get('retry-after'));
+        } catch (error) {
+            // Network failure or the attempt timing out.
+            outcome = { ok: false, status: null, attempts: attempt, body: String(error) };
         }
+
+        const delay = clamp(retryAfter ?? FIRST_DELAY_MS * 2 ** (attempt - 1), MIN_DELAY_MS, MAX_DELAY_MS);
+
+        if (attempt === ATTEMPTS || Date.now() - started + delay > BUDGET_MS) {
+            return outcome;
+        }
+
+        console.warn(JSON.stringify({ attempt, status: outcome.status, retryingInMs: delay }));
+        await sleep(delay);
     }
+}
+
+/** Retry-After in milliseconds, from either delay-seconds or an HTTP date. */
+function parseRetryAfter(value: string | null): number | null {
+    if (!value) {
+        return null;
+    }
+
+    if (/^\d+$/.test(value.trim())) {
+        return Number(value.trim()) * 1000;
+    }
+
+    const date = Date.parse(value);
+
+    return Number.isNaN(date) ? null : Math.max(0, date - Date.now());
+}
+
+function clamp(value: number, min: number, max: number): number {
+    return Math.min(Math.max(value, min), max);
 }
 
 async function readBody(response: Response): Promise<unknown> {
